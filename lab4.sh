@@ -10,7 +10,11 @@ sudo yum install ncurses-devel
 cd bastet-0.43
 make
 
-echo -e "install:\n\tinstall ./bastet /usr/bin" >> Makefile
+nano Makefile
+#install:
+#	cp bastet /usr/bin
+#	chmod -R 777 /usr/bin/
+
 make install
 
 #3
@@ -23,44 +27,36 @@ rpm -q --whatrequires libgcc > ~/task4_2.log
 #5
 yum install createrepo
 mkdir -p localrepo
+cp checkinstall-1.6.2-3.el6.1.x86_64.rpm localrepo/
 cd localrepo
-cp /mnt/share/checkinstall-1.6.2-3.el6.1.x86_64.rpm ~/localrepo/checkinstall-1.6.2-3.el6.1.x86_64.rpm
+yum install createrepo
 createrepo ~/localrepo
-cd /etc/yum.repos.d
-touch localrepo.repo
+touch /etc/yum.repos.d/localrepo.repo
 echo -e "[localrepo]\nname=localrepo\nbaseurl=file:///root/localrepo/\nenabled=1\ngpgcheck=0" > localrepo.repo
 
 #6
 dnf repolist all > ~/task6.log
 
 #7
-cd /etc/yum.repos.d/
-for f in *; do
-	mv "$f" "$(echo "$f" | sed s/repo/repdis/)";
-done
-mv localrepo.repdis localrepo.repo
-dnf install ~/localrepo/checkinstall-1.6.2-3.el6.1.x86_64.rpm
+mkdir repos
+mv /etc/yum.repos.d/* allrepos
+mv repos/localrepo.repo /etc/yum.repos.d/
+dnf list available
+dnf -enablerepo=localrepo install checkinstall
 
 #8
-cp /mnt/share/fortunes-ru_1.52-2_all.deb ~/fortunes-ru_1.52-2_all.deb
+cp ~/../linux/fortunes-ru_1.52-2_all.deb ~/fortunes-ru_1.52-2_all.deb
 
-tar -xf /mnt/share/alien_8.95.tar.xz -C ~
-dnf install perl
-cd alien-8.95
-perl Makefile.PL; make; make install
-
-cd ~
-alien --to-rpm ~/fortunes-ru_1.52-2_all.deb
-dvnf install --force ~/fortunes-ru-1.52-3.noarch.rpm
+alien -r fortunes-ru_1.52-2_all.deb
+rpm -i fortunes-ru-1.52-3.noarch.rpm
+dnf list installed | grep "fortunes"
 
 #9
+dnf install 'dnf-command(download)'
 dnf download nano
-
-dnf install https://extras.getpagespeed.com/release-el8-latest.rpm
 dnf install rpmrebuild
+rpmrebuild -epn nano #меняем название на newnano
 
-rpmrebuild -enp nano-2.9.8-1.el8.x86_64.rpm
-
-cd ~/rpmbuild/RPMS/x86_64/
-yum remove nano
-rpm -i newnano-2.9.8-1.el8.x86_64.rpm
+mv /usr/bin/nano /usr/bin/newnano
+rpm -i rpmbuild/RPMS/X86_64/newnano-2.3.1-10.el7.x86_64
+#newnano работает
